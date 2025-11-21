@@ -3,8 +3,8 @@ from dotenv import load_dotenv
 import os
 import json
 from app.tools import (
-    copy_database, create_database, create_db_user, grant_permission,
-    create_folder, set_folder_permission, copy_file
+    all_in_one, copy_database, create_database, create_db_user, grant_permission,
+    create_folder, set_folder_permission, copy_file, copy_files_only, copy_all
 )
 
 load_dotenv()
@@ -12,6 +12,23 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 tools = [
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "copy_database",
+    #         "description": "Copy database using mysqldump",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "source_db": {"type": "string"},
+    #                 "target_db": {"type": "string"},
+    #                 "user": {"type": "string"},
+    #                 "password": {"type": "string"}
+    #             },
+    #             "required": ["source_db", "target_db", "user", "password"]
+    #         }
+    #     }
+    # },
     # {
     #     "type":"function",
     #     "function" : {
@@ -26,94 +43,136 @@ tools = [
     #         }
     #     }
     # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "create_db_user",
+    #         "description": "Create a new database user",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "db_user": {"type": "string"},
+    #                 "db_pass": {"type": "string"},
+    #             },
+    #             "required": ["db_user", "db_pass"]
+    #         }
+    #     }
+    # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "grant_permission",
+    #         "description": "Grant database permissions to a user",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "db_user": {"type": "string"},
+    #                 "db_name": {"type": "string"},
+    #             },
+    #             "required": ["db_user", "db_name"]
+    #         }
+    #     }
+    # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "create_folder",
+    #         "description": "Create a folder at the specified path",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "path": {"type": "string"}
+    #             },
+    #             "required": ["path"]
+    #         }
+    #     }
+    # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "set_folder_permission",
+    #         "description": "Set permissions on a folder",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "path": {"type": "string"},
+    #                 "permission": {"type": "number"}
+    #             },
+    #             "required": ["path", "permission"]
+    #         }
+    #     }
+    # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "copy_file",
+    #         "description": "Copy a file from source to destination",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "src": {"type": "string"},
+    #                 "dest": {"type": "string"},
+    #             },
+    #             "required": ["src", "dest"]
+    #         }
+    #     }
+    # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "copy_files_only",
+    #         "description": "Copy all file from source folder to destination folder",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "source_folder": {"type": "string"},
+    #                 "destination_folder": {"type": "string"},
+    #             },
+    #             "required": ["source_folder", "destination_folder"]
+    #         }
+    #     }
+    # },
+    # {
+    #     "type": "function",
+    #     "function": {
+    #         "name": "copy_all",
+    #         "description": "Copy all file from source folder to destination folder",
+    #         "parameters": {
+    #             "type": "object",
+    #             "properties": {
+    #                 "source_folder": {"type": "string"},
+    #                 "destination_folder": {"type": "string"},
+    #             },
+    #             "required": ["source_folder", "destination_folder"]
+    #         }
+    #     }
+    # },
     {
         "type": "function",
         "function": {
-            "name": "copy_database",
-            "description": "Copy database using mysqldump",
+            "name": "all_in_one",
+            "description": "copy_database, create_db_user, grant_permission, create_folder, set_folder_permission and copy_file",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "source_db": {"type": "string"},
                     "target_db": {"type": "string"},
                     "user": {"type": "string"},
-                    "password": {"type": "string"}
-                },
-                "required": ["source_db", "target_db", "user", "password"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "create_db_user",
-            "description": "Create a new database user",
-            "parameters": {
-                "type": "object",
-                "properties": {
+                    "password": {"type": "string"},
                     "db_user": {"type": "string"},
                     "db_pass": {"type": "string"},
-                },
-                "required": ["db_user", "db_pass"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "grant_permission",
-            "description": "Grant database permissions to a user",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "db_user": {"type": "string"},
-                    "db_name": {"type": "string"},
-                },
-                "required": ["db_user", "db_name"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "create_folder",
-            "description": "Create a folder at the specified path",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "path": {"type": "string"}
-                },
-                "required": ["path"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "set_folder_permission",
-            "description": "Set permissions on a folder",
-            "parameters": {
-                "type": "object",
-                "properties": {
                     "path": {"type": "string"},
-                    "permission": {"type": "number"}
-                },
-                "required": ["path", "permission"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "copy_file",
-            "description": "Copy a file from source to destination",
-            "parameters": {
-                "type": "object",
-                "properties": {
+                    # "permission": {"type": "string"},
                     "src": {"type": "string"},
-                    "dest": {"type": "string"},
+                    # "dest": {"type": "string"},
                 },
-                "required": ["src", "dest"]
+                "required": ["source_db", "target_db", 
+                            "user", "password",
+                            "db_user", "db_pass",  "path", 
+                            # "permission",
+                            "src", 
+                            # "dest"
+                            ]
             }
         }
     }

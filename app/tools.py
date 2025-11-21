@@ -41,7 +41,7 @@ def copy_database(source_db, target_db, user, password):
     create_db_cmd = [
         "mysql",
         f"-u{MYSQL_ROOT}",
-        f"-p{MYSQL_PASS}",
+        # f"-p{MYSQL_PASS}",
         "-e",
         f"CREATE DATABASE IF NOT EXISTS `{target_db}`;"
     ]
@@ -53,7 +53,7 @@ def copy_database(source_db, target_db, user, password):
     dump_cmd = [
         "mysqldump",
         f"-u{MYSQL_ROOT}",
-        f"-p{MYSQL_PASS}",
+        # f"-p{MYSQL_PASS}",
         source_db
     ]
 
@@ -65,7 +65,7 @@ def copy_database(source_db, target_db, user, password):
     import_cmd = [
         "mysql",
         f"-u{MYSQL_ROOT}",
-        f"-p{MYSQL_PASS}",
+        # f"-p{MYSQL_PASS}",
         target_db
     ]
 
@@ -139,3 +139,58 @@ def set_folder_permission(path, permission):
 def copy_file(src, dest):
     shutil.copy(src, dest)
     return f"Copied file from {src} to {dest}"
+
+def copy_files_only(source_folder, destination_folder):
+    print("Starting file copy...")
+
+    # Create destination folder if not exists
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
+
+    # Loop files
+    for filename in os.listdir(source_folder):
+        src = os.path.join(source_folder, filename)
+        dst = os.path.join(destination_folder, filename)
+
+        # Copy only files
+        if os.path.isfile(src):
+            shutil.copy2(src, dst)
+            print(f"Copied: {filename}")
+
+    return f"All files copied successfully."
+
+def copy_all(source_folder, destination_folder):
+    print("Copying entire folder...")
+
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
+
+    # Copy folder tree
+    for root, dirs, files in os.walk(source_folder):
+        # Make subdirectories in destination
+        for dir_name in dirs:
+            dest_dir = os.path.join(destination_folder, os.path.relpath(os.path.join(root, dir_name), source_folder))
+            os.makedirs(dest_dir, exist_ok=True)
+
+        # Copy files
+        for file_name in files:
+            src_file = os.path.join(root, file_name)
+            rel_path = os.path.relpath(root, source_folder)
+            dest_dir = os.path.join(destination_folder, rel_path)
+            os.makedirs(dest_dir, exist_ok=True)
+
+            shutil.copy2(src_file, os.path.join(dest_dir, file_name))
+            print(f"Copied: {src_file}")
+
+    return f"Folder copied successfully."
+
+def all_in_one(source_db, target_db, user, password, db_user, db_pass,
+               path, src):
+    copy_database(source_db, target_db, user, password)
+    create_db_user(db_user, db_pass)
+    grant_permission(db_user, target_db)
+    # create_folder(path)
+    # set_folder_permission(path, permission)
+    copy_all(src, path)
+    # copy_file(src, path)
+    return f"Successfully done copy_database, create_db_user, grant_permission, create_folder and copy_all"
