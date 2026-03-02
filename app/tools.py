@@ -3,8 +3,12 @@ import os
 import shutil
 import mysql.connector
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
+
+import requests
+WEATHER_API_KEY = os.getenv("WEATHER_API_KEY")
 
 MYSQL_ROOT = os.getenv("MYSQL_ROOT_USER")
 MYSQL_PASS = os.getenv("MYSQL_ROOT_PASSWORD")
@@ -194,3 +198,94 @@ def all_in_one(source_db, target_db, user, password, db_user, db_pass,
     copy_all(src, path)
     # copy_file(src, path)
     return f"Successfully done copy_database, create_db_user, grant_permission, create_folder and copy_all"
+
+def get_data(database, table, columns="*", where=None):
+    """
+    Fetch data from a table.
+    
+    :param table: table name
+    :param columns: list of columns OR "*" for all
+    :param where: optional WHERE condition (string)
+    :return: fetched rows as list of dicts
+    """
+
+    # Convert list of columns to CSV format
+    if isinstance(columns, list):
+        columns = ", ".join(columns)
+
+    try:
+        conn = mysql.connector.connect(
+            user=MYSQL_ROOT,
+            password=MYSQL_PASS,
+            host=MYSQL_HOST,
+            database = database
+        )
+        cursor = conn.cursor(dictionary=True)
+
+        query = f"SELECT {columns} FROM {table}"
+
+        if where:
+            query += f" WHERE {where}"
+
+        # print("Query:", query)
+
+        cursor.execute(query)
+        results = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        return results
+
+    except mysql.connector.Error as err:
+        return {"error": str(err)}
+    
+def insert_data(database, table, data):
+    """
+    Insert data into a table.
+    
+    :param table: table name
+    :param data: dict of column-value pairs
+    :return: success message or error
+    """
+
+    try:
+        conn = mysql.connector.connect(
+            user=MYSQL_ROOT,
+            password=MYSQL_PASS,
+            host=MYSQL_HOST,
+            database = database
+        )
+        cursor = conn.cursor()
+
+        # print("Data to insert:", data)
+
+        data = json.loads(data)
+        
+        columns = ", ".join(data.keys())
+        placeholders = ", ".join(["%s"] * len(data))
+        values = list(data.values())
+
+        query = f"INSERT INTO {table} ({columns}) VALUES ({placeholders})"
+
+        # print("Query:", query)
+        # print("Values:", values)
+
+        cursor.execute(query, values)
+        conn.commit()
+
+        cursor.close()
+        conn.close()
+
+        return {"success": "Data inserted successfully."}
+
+    except mysql.connector.Error as err:
+        return {"error": str(err)}
+    
+def get_weather(city: str):
+    API_KEY = WEATHER_API_KEY
+    url = (
+        "https://api.openweathermap.org/data/2.5/weather"
+        f"?q={city}&appid={API_KEY}&units=metric"
+    )
+    return requests.get(url).json()

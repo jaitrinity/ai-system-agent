@@ -4,7 +4,8 @@ import os
 import json
 from app.tools import (
     all_in_one, copy_database, create_database, create_db_user, grant_permission,
-    create_folder, set_folder_permission, copy_file, copy_files_only, copy_all
+    create_folder, set_folder_permission, copy_file, copy_files_only, copy_all,
+    get_data, insert_data,get_weather
 )
 
 load_dotenv()
@@ -173,6 +174,53 @@ tools = [
                             "src", 
                             # "dest"
                             ]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_data",
+            "description": "get data from database table with optional where clause",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "database": {"type": "string"},
+                    "table": {"type": "string"},
+                    "columns": {"type": "string"},
+                    "where": {"type": "string"},
+                },
+                "required": ["database", "table"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "insert_data",
+            "description": "insert data into table",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "database": {"type": "string"},
+                    "table": {"type": "string"},
+                    "data": {"type": "string"},
+                },
+                "required": ["database", "table", "data"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_weather",
+            "description": "Get current weather for a city",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "city": {"type": "string"}
+                },
+                "required": ["city"]
             }
         }
     }
